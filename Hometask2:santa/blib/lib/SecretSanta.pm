@@ -11,8 +11,8 @@ sub calculate {
 	# ...
 	#	push @res,[ "fromname", "toname" ];
 	# ...
-	my (@values, %pairs_done, %family); #@values - массив из всех имен без ссылок, %pairs_done - хэш пар, составленных случайным образом,
-										#%family - хэш супружеских пар, которые по условию запрещены в качестве результата
+	my (@values, %family); 	#@values - массив из всех имен без ссылок, 
+							#%family - хэш супружеских пар, которые по условию запрещены в качестве результата
 
 	foreach my $val (@members) {		#формирование массива @values и хэша %family	
 		unless (ref $val) {
@@ -25,20 +25,34 @@ sub calculate {
 		}
 	}
 
-	my %unused_tonames;					#%unused_tonames - имена, которые еще не получили подарки
-	@unused_tonames{@values} = (); 
-	%pairs_done = map {$_ => @values[rand @values]} @values;
+	until (scalar @values == scalar @res) {		#выполнять подбор, пока не будет столько правильных пар, сколько уникальных имен
 
-	while (my ($fromname, $toname) = each %pairs_done) {	 #проверка правильности подбора пар случайным образом
+		@res = ();
+		my %forbiden_pairs;						#%forbiden_pairs - хэш из пар, которые на данный момент подбора запрещены в качестве результата
+		my %helper = map {$_ => $_} @values;
+		my %pairs_done;							#%pairs_done - хэш-результат случайного подбора пар
 
-    	while ($fromname eq $toname || $pairs_done{$toname} eq $fromname || 
-    		exists $family{$fromname} && $toname eq $family{$fromname} || !(exists $unused_tonames{$toname})) {
-    		
-    		$toname = @values[rand @values];	#если случайно подобранная пара не удовлетворяет условиям, то подобрать дарителя снова
-    	}
-    	
-    	push @res, [$fromname, $toname];		#поместить сслыку на полученную пару в результирующий массив
-    	delete $unused_tonames{$toname};		#$toname больше не может быть использован в качестве дарителя
+		foreach my $fromname (@values) {		#формирование %forbiden_pairs и %pairs_done
+			my @harr = values %helper;
+			my $i = @harr[rand @harr];
+			$pairs_done{$fromname} = $i;
+			$forbiden_pairs{$i} = $fromname;
+			delete $helper{$i}; 
+		}
+
+		while (my ($fromname, $toname) = each %pairs_done) {	#проверка правильности случайного подбора
+			
+			if ($fromname eq $toname ||
+				exists $family{$fromname} && $family{$fromname} eq $toname ||
+				exists $forbiden_pairs{$fromname} && $forbiden_pairs{$fromname} eq $toname) {
+
+				@res = ();
+				last;
+			}
+			push @res, [$fromname, $toname];
+
+		}
+
 	}
 
 	
