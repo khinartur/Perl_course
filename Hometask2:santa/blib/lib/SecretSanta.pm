@@ -25,36 +25,40 @@ sub calculate {
 		}
 	}
 
-	until (scalar @values == scalar @res) {		#выполнять подбор, пока не будет столько правильных пар, сколько уникальных имен
+	unless (scalar @values <= 2 || scalar keys %family == 2 && scalar @values == 3) {
 
-		@res = ();
-		my %forbiden_pairs;						#%forbiden_pairs - хэш из пар, которые на данный момент подбора запрещены в качестве результата
-		my %helper = map {$_ => $_} @values;
-		my %pairs_done;							#%pairs_done - хэш-результат случайного подбора пар
+		until (scalar @values == scalar @res) {		#выполнять подбор, пока не будет столько правильных пар, сколько уникальных имен
 
-		foreach my $fromname (@values) {		#формирование %forbiden_pairs и %pairs_done
-			my @harr = values %helper;
-			my $i = @harr[rand @harr];
-			$pairs_done{$fromname} = $i;
-			$forbiden_pairs{$i} = $fromname;
-			delete $helper{$i}; 
-		}
+			@res = ();
+			my %forbiden_pairs;						#%forbiden_pairs - хэш из пар, которые на данный момент подбора запрещены в качестве результата
+			my %helper = map {$_ => $_} @values;
+			my %pairs_done;							#%pairs_done - хэш-результат случайного подбора пар
 
-		while (my ($fromname, $toname) = each %pairs_done) {	#проверка правильности случайного подбора
-			
-			if ($fromname eq $toname ||
-				exists $family{$fromname} && $family{$fromname} eq $toname ||
-				exists $forbiden_pairs{$fromname} && $forbiden_pairs{$fromname} eq $toname) {
-
-				@res = ();
-				last;
+			foreach my $fromname (@values) {		#формирование %forbiden_pairs и %pairs_done
+				my @harr = values %helper;
+				my $i = @harr[rand @harr];
+				$pairs_done{$fromname} = $i;
+				$forbiden_pairs{$i} = $fromname;
+				delete $helper{$i}; 
 			}
-			push @res, [$fromname, $toname];
+
+			while (my ($fromname, $toname) = each %pairs_done) {	#проверка правильности случайного подбора
+				
+				if ($fromname eq $toname ||
+					exists $family{$fromname} && $family{$fromname} eq $toname ||
+					exists $forbiden_pairs{$fromname} && $forbiden_pairs{$fromname} eq $toname) {
+
+					@res = ();
+					last;
+				}
+				push @res, [$fromname, $toname];
+
+			}
 
 		}
-
+	} else {
+		@res = ();
 	}
-
 	
 	return @res;
 }
