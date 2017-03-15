@@ -47,34 +47,29 @@ sub anagram {
     #
     # Поиск анаграмм
     #
-    use Encode;
     my @words_list = @$words_list;
 
-    foreach (@words_list) {            #цикл по каждому переданному слову
-        my $word = lc decode_utf8($_, 1);    #привести очередное слово к utf8, чтобы иметь возможность применить lc
-                
-        my $anagram_flag = 0;           #anagram_flag = 1 если очередное слово является анаграммой к уже существующему множеству анаграмм 
-                                        #в результирующем хэше
-        foreach (keys %result) {                                #проверка, является ли очередное слово анаграммой к какому-нибудь множеству
-                                                                #результирующего хэша
-            if ($anagram_flag = $_ eq (join '', sort {$a cmp $b} split //, $word)) {        #если очередное слово соответствующая анаграмма
-                push ($result{$_}, $word) unless (exists $result{$_} && scalar grep {$_ eq $word} @{$result{$_}}); 
-                                                #добавить слово в множество соответствующих анаграмм, если конечно оно туда уже не входит
-                last;       #завершить цикл по ключам - очередное слово уже обработано
-            }
+    use Encode;
+
+    foreach (@words_list) {           
+        my $word = lc decode_utf8($_, 1);    
+        
+        my $key = join '', sort split //, $word;
+
+        if (exists $result{$key}) {
+            push $result{$key}, $word unless grep {$_ eq $word} @{$result{$key}};
+        }
+        else {
+            $result{$key} = [$word];
         }
 
-        unless ($anagram_flag) {        #если слово не является анаграммой, то добавить новое множество анаграмм с этим единственным словом
-            my $key = join '', sort {$a cmp $b} split //, $word;
-            $result{$key} = [$word];    #ключ - слово из символов анаграммы, отсортированных по возрастанию
-        }
     }
 
     foreach (keys %result) {            #удалить множества с одним словом, отсортировать множетства по возрастанию, заменить ключ на первое слово в
                                         #множестве
         if (@{$result{$_}} != 1) {
             my $key = encode_utf8 @{$result{$_}}[0];
-            my @array = map {encode_utf8 $_} sort {$a cmp $b} @{$result{$_}};
+            my @array = map {encode_utf8 $_} sort @{$result{$_}};
             delete $result{$_};
             $result{$key} = \@array;
         }
