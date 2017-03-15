@@ -65,11 +65,12 @@ sub anagram {
 
     }
 
-    foreach (keys %result) {            #удалить множества с одним словом, отсортировать множетства по возрастанию, заменить ключ на первое слово в
-                                        #множестве
+    foreach (keys %result) {            
+
         if (@{$result{$_}} != 1) {
-            my $key = encode_utf8 @{$result{$_}}[0];
-            my @array = map {encode_utf8 $_} sort @{$result{$_}};
+            my @array = map {encode_utf8 $_} @{$result{$_}};
+            my $key = $array[0];
+            @array = sort @array;
             delete $result{$_};
             $result{$key} = \@array;
         }
