@@ -43,25 +43,18 @@ sub anagram {
     my $words_list = shift;
     my %result;
     use utf8;
-
+    use Encode;
     #
     # Поиск анаграмм
     #
     my @words_list = @$words_list;
-
-    use Encode;
 
     foreach (@words_list) {           
         my $word = lc decode_utf8($_, 1);    
         
         my $key = join '', sort split //, $word;
 
-        if (exists $result{$key}) {
-            push $result{$key}, $word unless grep {$_ eq $word} @{$result{$key}};
-        }
-        else {
-            $result{$key} = [$word];
-        }
+        push $result{$key}, $word unless grep {$_ eq $word} @{$result{$key}};
 
     }
 
