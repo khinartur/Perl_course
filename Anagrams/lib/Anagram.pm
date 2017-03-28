@@ -54,7 +54,7 @@ sub anagram {
         
         my $key = join '', sort split //, $word;
 
-        push $result{$key}, $word unless grep {$_ eq $word} @{$result{$key}};
+        push @{$result{$key}}, $word unless grep {$_ eq $word} @{$result{$key}};
 
     }
 
