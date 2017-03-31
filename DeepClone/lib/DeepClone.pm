@@ -3,6 +3,7 @@ package DeepClone;
 use 5.010;
 use strict;
 use warnings;
+use Error qw(:try);
 
 =encoding UTF8
 
@@ -51,10 +52,6 @@ sub deep_clone {
 			$hash_of_refs->{$element} = $iteration_result;
 			foreach (@$element) {push @$iteration_result, deep_clone($_, $hash_of_refs)};
 
-			foreach (@$iteration_result) {
-				return sub {} if ref $_ && ref $_ eq 'CODE';
-			}
-
 		}
 		elsif ($ref eq 'HASH') {	#если очередной элемент - ссылка на хэш
 
@@ -64,16 +61,11 @@ sub deep_clone {
 			$hash_of_refs->{$element} = $iteration_result;
 			while (my ($k, $v) = each %$element) {
 				$iteration_result->{$k} = deep_clone($v, $hash_of_refs);
-			}
-			foreach (values %$iteration_result) {
-				return sub {} if ref $_ && ref $_ eq 'CODE';
-			}			
-
+			}		
 		}
 
 		else {						#если очередной элемент - ссылка на нечто иное - недопустимый тип
-			return sub {} if ref $element eq 'CODE';
-			return undef;
+			throw Error::Simple 'Bad structure!';
 		}
 	} else {						#если очередной элемент не ссылка и не недопустимый тип
 		$iteration_result = $element;
@@ -90,13 +82,11 @@ sub clone {
 	# ...
 	
 	my %hash_of_refs;	#хэш ссылок, которые уже были копированы в структуру (на случай рекурсивных структур)
-	my $deep = deep_clone($orig, \%hash_of_refs);
-	unless (ref $deep && ref $deep eq 'CODE') {
-		$cloned = $deep;
+	
+	try {
+		$cloned = deep_clone($orig, \%hash_of_refs);
 	}
-	else {
-		$cloned = undef;
-	}
+	catch Error::Simple with { $cloned = undef; };
 
 	return $cloned;
 }

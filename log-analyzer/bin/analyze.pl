@@ -4,6 +4,8 @@ use strict;
 use warnings;
 our $VERSION = 1.0;
 
+use POSIX;
+use List::Util qw/min/;
 
 my $filepath = $ARGV[0];
 die "USAGE:\n$0 <log-file.bz2>\n"  unless $filepath;
@@ -13,13 +15,12 @@ my $parsed_data = parse_file($filepath);
 report($parsed_data);
 exit;
 
+
 sub parse_file {
     my $file = shift;
 
     # you can put your code here ВЫДЕЛЕН ДОБАВЛЕННЫЙ МНОЙ КОД
     #######################################################
-
-    use List::Util qw/min/;
 
     my $query_count;    #количество запросов в общем
     my %total_minutes;      #все минуты, в которых происходят запросы
@@ -32,30 +33,35 @@ sub parse_file {
 
     #######################################################
 
+     my $fd;
+    if ($file =~ /\.bz2$/) {
+        open $fd, "-|", "bunzip2 < $file" or die "Can't open '$file' via bunzip2: $!";
+    } else {
+        open $fd, "<", $file or die "Can't open '$file': $!";
+    }
+
     my $result;
-    open my $fd, "-|", "bunzip2 < $file" or die "Can't open '$file': $!";
     while (my $log_line = <$fd>) {
 
         # you can put your code here
         # $log_line contains line from log file
     #######################################################
 
+        next unless ($ip, $minute, $status, $compressed_data, $indices) = $log_line =~ 
+                /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) \[(\d{1,2}\/[JFMASOND][a-z]{2}\/\d{4}:\d{2}:\d{2}):\d{2} \+\d{4}\] "[A-Z]+ [^"]+" (\d{3}) (\d{1,}) "[^"]+" "[^"]+" "(.+)"$/;
         $query_count++;
-        ($ip, $minute, $status, $compressed_data, $indices) = $log_line =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) \[\d{1,2}\/[JFMASOND][a-z]{2}\/\d{4}:(\d{2}:\d{2}):\d{2} \+\d{4}\] ["](?:.+)["] (\d{3}) (\d{1,}) ["](?:.+)["] ["](?:.+)["] ["](.+)["]$/;
-        my ($a, $b) = $minute =~ /(\d{2}):(\d{2})/;
-        $minute = $a.$b;    #храним минуты в формате HHMM
+
         $indices = 1 if $indices eq "-";
 
-        my $uncompressed_data = $compressed_data * $indices;    #количество несжатых данных
+        my $uncompressed_data = $status eq "200" ? floor ($compressed_data * $indices) : 0;    #количество несжатых данных
 
-        $total_data += $uncompressed_data;              #добавляем к счетчику несжатых данных
+        $total_data += $uncompressed_data;           #добавляем к счетчику несжатых данных
         $total_minutes{$minute} = 1;                    #минута, в которой произошел запрос
         $data_of_status{$status} += $compressed_data;   #количество сжатых данных по статусам запросов 
         $hash_of_ip{$ip}{"count"}++;                    #количество запросов от данного ip адреса
         $hash_of_ip{$ip}{"minutes"}{$minute} = 1;       #минуты, в которых происходили запросы от данного ip адреса
         $hash_of_ip{$ip}{"data"} += $uncompressed_data; #количество несжатых данных от данного ip
         $hash_of_ip{$ip}{$status} += $compressed_data;  #количество сжатых данных по каждому статусу от ip
-
 
         my $min_val = min values %top10_hash;
         
@@ -79,6 +85,7 @@ sub parse_file {
     #######################################################
 
     }
+
     close $fd;
 
     # you can put your code here
@@ -111,31 +118,33 @@ sub report {
 
     # you can put your code here
     #######################################################
+    my $kb = 1024;  #для вывода в килобайтах
 
-    printf "%-8s%-8s%-8s%-8s","IP","count","avg","data";
+    print "IP\tcount\tavg\tdata";
     my @sort_status = sort keys $result->{"Status"};
     foreach (@sort_status) {
-        printf "%-8s", $_;
+        print "\t$_";
     }
     printf "\n";
-    printf "%-8s%-8s%-8.2f%-8.0f","total",$result->{"Count"},$result->{"Count"}/$result->{"Minutes"},$result->{"Data"}/1024;
+    printf "%s\t%s\t%.2f\t%.0f","total",$result->{"Count"},$result->{"Count"}/$result->{"Minutes"}, floor $result->{"Data"}/1024;
     foreach (@sort_status) {
-        printf "%-8.0f", $result->{"Status"}{$_}/1024;
+        printf "\t%d", floor $result->{"Status"}{$_}/$kb;
     }
     print "\n";
 
-    foreach (@{$result->{"top_ip"}}) {
-        printf "%-16s%-8s%-8.2f%-8.0f", $_, $result->{"hash_of_ip"}{$_}{"count"}, 
-                        $result->{"hash_of_ip"}{$_}{"count"}/(scalar keys $result->{"hash_of_ip"}{$_}{"minutes"}),
-                        $result->{"hash_of_ip"}{$_}{"data"}/1024;
+    foreach (@{$result->{'top_ip'}}) {
+        print("$_\t");
+        print("$result->{'hash_of_ip'}{$_}{'count'}\t");
+        printf("%.2f\t%d", $result->{"hash_of_ip"}{$_}{"count"}/(scalar keys $result->{"hash_of_ip"}{$_}{"minutes"}),
+                        floor $result->{"hash_of_ip"}{$_}{"data"}/$kb);
 
-        my $arg = $_;
-        foreach (@sort_status) {
-            printf "%-8.0f", $result->{"hash_of_ip"}{$arg}{$_} ? $result->{"hash_of_ip"}{$arg}{$_}/1024 : 0;
+        foreach my $status (@sort_status) {
+            printf "\t%d", $result->{"hash_of_ip"}{$_}{$status} ? floor $result->{"hash_of_ip"}{$_}{$status}/$kb : 0;
         }
         print "\n";
     }
 
     #######################################################
+
 
 }
