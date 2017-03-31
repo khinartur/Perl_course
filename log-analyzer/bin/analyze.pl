@@ -121,7 +121,7 @@ sub report {
     my $kb = 1024;  #для вывода в килобайтах
 
     print "IP\tcount\tavg\tdata";
-    my @sort_status = sort keys $result->{"Status"};
+    my @sort_status = sort keys %{$result->{"Status"}};
     foreach (@sort_status) {
         print "\t$_";
     }
@@ -135,7 +135,7 @@ sub report {
     foreach (@{$result->{'top_ip'}}) {
         print("$_\t");
         print("$result->{'hash_of_ip'}{$_}{'count'}\t");
-        printf("%.2f\t%d", $result->{"hash_of_ip"}{$_}{"count"}/(scalar keys $result->{"hash_of_ip"}{$_}{"minutes"}),
+        printf("%.2f\t%d", $result->{"hash_of_ip"}{$_}{"count"}/(scalar keys %{$result->{"hash_of_ip"}{$_}{"minutes"}}),
                         floor $result->{"hash_of_ip"}{$_}{"data"}/$kb);
 
         foreach my $status (@sort_status) {
