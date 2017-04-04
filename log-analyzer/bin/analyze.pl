@@ -4,8 +4,6 @@ use strict;
 use warnings;
 our $VERSION = 1.0;
 
-use List::Util qw/min/;
-
 my $filepath = $ARGV[0];
 die "USAGE:\n$0 <log-file.bz2>\n"  unless $filepath;
 die "File '$filepath' not found\n" unless -f $filepath;
@@ -24,7 +22,6 @@ sub parse_file {
     my %hash_of_ip = (total => {"ip" => "total"});     #хэш всех ip, с которых происходили запросы. Включает необходимые для вывода данные    
     my ($ip, $minute, $status, $compressed_data, $indices);     #информация из строки лога
     my @top_10_ip;     #топ десять ip адресов для вывода в результат
-    my %hash_all;      #вспомогательный хэш, хранящий только ip и количество запросов
 
     #######################################################
 
@@ -58,9 +55,6 @@ sub parse_file {
         $hash_of_ip{$ip}{"minutes"}{$minute} = 1;       #минуты, в которых происходили запросы от данного ip адреса
         $hash_of_ip{$ip}{"data"} += $uncompressed_data; #количество несжатых данных от данного ip
         $hash_of_ip{$ip}{data_of_status}{$status} += $compressed_data;  #количество сжатых данных по каждому статусу от ip
-        
-       delete $hash_all{$ip} if exists $hash_all{$ip};
-       $hash_all{$ip} = $hash_of_ip{$ip}{"count"};
 
     #######################################################
 
@@ -71,10 +65,8 @@ sub parse_file {
     # you can put your code here
     #######################################################
 
-    @top_10_ip = sort {$hash_all{$b} <=> $hash_all{$a}} keys %hash_all;
-    @top_10_ip = splice @top_10_ip, 0, 10;
-
-    unshift @top_10_ip, "total";
+    @top_10_ip = sort {$hash_of_ip{$b}{'count'} <=> $hash_of_ip{$a}{'count'}} keys %hash_of_ip;
+    @top_10_ip = splice @top_10_ip, 0, 11;
 
     foreach (@top_10_ip) {
         push @result, $hash_of_ip{$_};
@@ -93,7 +85,7 @@ sub report {
     my $kb = 1024;  #для вывода в килобайтах
 
     my @sort_status = sort keys @{$result}[0]->{data_of_status};
-    $" = "\t";
+    local $" = "\t";
     print "IP\tcount\tavg\tdata\t@sort_status\n";
 
     foreach my $temp_ip (@$result) {
