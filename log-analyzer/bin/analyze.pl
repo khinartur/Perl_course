@@ -84,14 +84,14 @@ sub report {
     #######################################################
     my $kb = 1024;  #для вывода в килобайтах
 
-    my @sort_status = sort keys @{$result}[0]->{data_of_status};
+    my @sort_status = sort keys %{@{$result}[0]->{data_of_status}};
     local $" = "\t";
     print "IP\tcount\tavg\tdata\t@sort_status\n";
 
     foreach my $temp_ip (@$result) {
         
         printf "%s\t%d\t%.2f\t%d", $temp_ip->{'ip'}, 
-            $temp_ip->{'count'}, $temp_ip->{'count'} / scalar keys $temp_ip->{'minutes'}, $temp_ip->{'data'}/$kb;
+            $temp_ip->{'count'}, $temp_ip->{'count'} / scalar keys %{$temp_ip->{'minutes'}}, $temp_ip->{'data'}/$kb;
         foreach my $status (@sort_status) {
             printf "\t%d", $temp_ip->{data_of_status}{$status} ? $temp_ip->{data_of_status}{$status}/$kb : 0;
         }
