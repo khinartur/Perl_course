@@ -10,10 +10,10 @@ our @ISA = qw(Local::Source);
 use Local::Source;
 
 sub new {
-	my $class = $_[0];
-	shift;	#пропускаем название параметра
-	my $text = $_[1];
-	my $delimeter = defined $_[2] ? $_[1] : "\n";
+	my $class = shift;
+	my %params = @_;
+	my $text = $params{text};
+	my $delimeter = defined $params{delimeter} ? $params{delimeter} : "\n";
 
 	my @array = split $delimeter, $text;
 	bless \@array, $class; 

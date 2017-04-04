@@ -11,8 +11,8 @@ use Local::Source;
 
 sub new {
 	my $class = shift;
-	shift;	#пропускаем название параметра
-	my $array = shift;
+	my %params = @_;
+	my $array = $params{array};
 
 	bless $array, $class;
 }

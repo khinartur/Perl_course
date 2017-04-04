@@ -14,8 +14,9 @@ use Local::Row::Simple;
 use Local::Row::JSON;
 
 sub new {
-	my $class = $_[0];
-	my ($top, $bottom, $source, $row_class, $initial_value) = ($_[2], $_[4], $_[6], $_[8], $_[10]);
+	my $class = shift;
+    my %params = @_; 
+    my ($top, $bottom, $source, $row_class, $initial_value) = ($params{top}, $params{bottom}, $params{source}, $params{row_class}, $params{initial_value});
 	my $self = Local::Reducer->new($source, $row_class, $initial_value);
 	$self->{top} = $top;
 	$self->{bottom} = $bottom;

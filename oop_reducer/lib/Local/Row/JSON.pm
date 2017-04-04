@@ -10,13 +10,12 @@ our @ISA = qw(Local::Row);
 use Local::Row;
 
 sub new {
-	my $class = $_[0];
-	my $log_string = $_[1];
+	my $class = shift;
+	my $log_string = shift;
 
 	return undef unless $log_string =~ m/^\{"([^:"]+)":\s*(\d+)\s*\}$/;
 
-	my $self = Local::Row->new($log_string);
-	bless $self, $class;
+	my $self = $class->Local::Row::new($log_string);
 
 	return $self;
 }
