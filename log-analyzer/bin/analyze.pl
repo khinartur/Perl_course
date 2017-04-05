@@ -45,16 +45,14 @@ sub parse_file {
         $indices = 1 if $indices eq "-";
 
         my $uncompressed_data = $status eq "200" ? int ($compressed_data * $indices) : 0;    #количество несжатых данных
-
-        $hash_of_ip{$ip}{ip} = $ip;
-        $hash_of_ip{total}{data} += $uncompressed_data;  #добавляем к счетчику несжатых данных   
-        $hash_of_ip{total}{count}++;     #добавляемк общему числу запросов            
-        $hash_of_ip{total}{minutes}{$minute} = 1; #минута, в которой произошел запрос
-        $hash_of_ip{total}{data_of_status}{$status} += $compressed_data; #количество сжатых данных по статусам запросов
-        $hash_of_ip{$ip}{count}++;                    #количество запросов от данного ip адреса
-        $hash_of_ip{$ip}{minutes}{$minute} = 1;       #минуты, в которых происходили запросы от данного ip адреса
-        $hash_of_ip{$ip}{data} += $uncompressed_data; #количество несжатых данных от данного ip
-        $hash_of_ip{$ip}{data_of_status}{$status} += $compressed_data;  #количество сжатых данных по каждому статусу от ip
+        
+        foreach ('total', $ip) {
+            $hash_of_ip{$_}{ip} = $_;
+            $hash_of_ip{$_}{count}++;                                      #количество запросов от данного ip адреса
+            $hash_of_ip{$_}{minutes}{$minute} = 1;                         #минуты, в которых происходили запросы от данного ip адреса
+            $hash_of_ip{$_}{data} += $uncompressed_data;                   #количество несжатых данных от данного ip
+            $hash_of_ip{$_}{data_of_status}{$status} += $compressed_data;  #количество сжатых данных по каждому статусу ответа для данного ip
+        }
 
     #######################################################
 
@@ -88,9 +86,7 @@ sub report {
     local $" = "\t";
     print "IP\tcount\tavg\tdata\t@sort_status\n";
 
-    my $format = "%s\t%d\t%.2f\t%d";
-    $format .= "\t%d" foreach @sort_status;
-    $format .= "\n";
+    my $format = "%s\t%d\t%.2f\t%d\t".join("\t", map { "%d" } @sort_status)."\n";
     
     foreach my $s (@$result) {
         printf $format, $s->{ip}, $s->{count}, $s->{count} / scalar keys %{$s->{minutes}}, $s->{data} / $kb,
