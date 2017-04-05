@@ -46,14 +46,14 @@ sub parse_file {
 
         my $uncompressed_data = $status eq "200" ? int ($compressed_data * $indices) : 0;    #количество несжатых данных
 
-        $hash_of_ip{$ip}{"ip"} = $ip;
-        $hash_of_ip{total}{"data"} += $uncompressed_data;  #добавляем к счетчику несжатых данных   
-        $hash_of_ip{total}{"count"}++;     #добавляемк общему числу запросов            
-        $hash_of_ip{total}{"minutes"}{$minute} = 1; #минута, в которой произошел запрос
+        $hash_of_ip{$ip}{ip} = $ip;
+        $hash_of_ip{total}{data} += $uncompressed_data;  #добавляем к счетчику несжатых данных   
+        $hash_of_ip{total}{count}++;     #добавляемк общему числу запросов            
+        $hash_of_ip{total}{minutes}{$minute} = 1; #минута, в которой произошел запрос
         $hash_of_ip{total}{data_of_status}{$status} += $compressed_data; #количество сжатых данных по статусам запросов
-        $hash_of_ip{$ip}{"count"}++;                    #количество запросов от данного ip адреса
-        $hash_of_ip{$ip}{"minutes"}{$minute} = 1;       #минуты, в которых происходили запросы от данного ip адреса
-        $hash_of_ip{$ip}{"data"} += $uncompressed_data; #количество несжатых данных от данного ip
+        $hash_of_ip{$ip}{count}++;                    #количество запросов от данного ip адреса
+        $hash_of_ip{$ip}{minutes}{$minute} = 1;       #минуты, в которых происходили запросы от данного ip адреса
+        $hash_of_ip{$ip}{data} += $uncompressed_data; #количество несжатых данных от данного ip
         $hash_of_ip{$ip}{data_of_status}{$status} += $compressed_data;  #количество сжатых данных по каждому статусу от ip
 
     #######################################################
@@ -65,7 +65,7 @@ sub parse_file {
     # you can put your code here
     #######################################################
 
-    @top_10_ip = sort {$hash_of_ip{$b}{'count'} <=> $hash_of_ip{$a}{'count'}} keys %hash_of_ip;
+    @top_10_ip = sort {$hash_of_ip{$b}{count} <=> $hash_of_ip{$a}{count}} keys %hash_of_ip;
     @top_10_ip = splice @top_10_ip, 0, 11;
 
     foreach (@top_10_ip) {
@@ -88,14 +88,14 @@ sub report {
     local $" = "\t";
     print "IP\tcount\tavg\tdata\t@sort_status\n";
 
-    foreach my $temp_ip (@$result) {
-        
-        printf "%s\t%d\t%.2f\t%d", $temp_ip->{'ip'}, 
-            $temp_ip->{'count'}, $temp_ip->{'count'} / scalar keys %{$temp_ip->{'minutes'}}, $temp_ip->{'data'}/$kb;
-        foreach my $status (@sort_status) {
-            printf "\t%d", $temp_ip->{data_of_status}{$status} ? $temp_ip->{data_of_status}{$status}/$kb : 0;
-        }
-        print "\n";
+    my $format = "%s\t%d\t%.2f\t%d";
+    $format .= "\t%d" foreach @sort_status;
+    $format .= "\n";
+    
+    foreach my $s (@$result) {
+        printf $format, $s->{ip}, $s->{count}, $s->{count} / scalar keys %{$s->{minutes}}, $s->{data} / $kb,
+            map {($s->{data_of_status}{$_} || 0) / $kb} @sort_status; 
     }
+
     #######################################################
 }
