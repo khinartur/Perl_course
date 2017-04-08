@@ -41,10 +41,13 @@ sub import {
 	shift @_;
 	my @constants = @_;
 	my $package = caller;
-	
-	my @export_array;					#@EXPORT_OK
-	my %export_groups = (all => []);	#%EXPORT_TAGS
-	
+
+	{
+		no strict 'refs';
+		push @{"${package}::ISA"}, 'Exporter';
+		%{"${package}".'::EXPORT_TAGS'} = (all => []);
+	}
+
 	unless ((scalar @constants) & 1) {
 		foreach my $pair ( pairs @constants ) {
 	   		my ( $name, $const ) = @$pair;
@@ -59,15 +62,17 @@ sub import {
 					{
 						no strict 'refs';
 						*{"$package::$name"} = sub () { $const };
+						push @{"${package}::EXPORT_OK"}, $name;
+						push ${"${package}".'::EXPORT_TAGS'}{all}, $name;
 					}	
-					push @{$export_groups{all}}, $name;
-					push @export_array, $name;
-	
 				}	
 			} 
 			else {
 
-				$export_groups{$name} = [];
+				{
+					no strict 'refs';
+					${"${package}".'::EXPORT_TAGS'}{$name} = [];
+				}
 
 				while (my ($k, $v) = each %$const) {
 
@@ -79,10 +84,10 @@ sub import {
 						{
 							no strict 'refs';
 							*{"$package::$k"} = sub () { $v };
+							push @{"${package}::EXPORT_OK"}, $k;
+							push ${"${package}".'::EXPORT_TAGS'}{all}, $k;
+							push ${"${package}".'::EXPORT_TAGS'}{$name}, $k;
 						}
-						push @{$export_groups{$name}}, $k;
-						push @{$export_groups{all}}, $k;
-						push @export_array, $k;
 						
 					}
 				}
@@ -92,13 +97,7 @@ sub import {
 	else {
 		die "invalid args checked";
 	}
-	
-	eval "
-		package $package;
-		use Exporter qw/import/;
-		our ".'@EXPORT_OK'." = ".'@export_array'.";
-		our ".'%EXPORT_TAGS'." = %export_groups;
-	";
+
 }
 
 1;
