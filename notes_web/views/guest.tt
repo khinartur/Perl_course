@@ -1,0 +1,31 @@
+<div class="row">
+	<div class="col-md-9">
+	    <h3>Профиль</h3>
+	    <div>
+	    	<span>Логин пользователя:</span>
+	    	<% login %>
+	    </div>
+	    <br/>
+	    <form class="form_horizontal" id="friendform" name="friendform" method="post">
+	        <input type="hidden" name="add" value="1">
+	        <button type="submit" class="btn btn-primary" name="submit" <% IF btn_value == 'У вас в друзьях' %>disabled<% END%>><% btn_value %></button>
+	    </form>
+	</div>
+	<div class="col-md-3">
+	    <h3>Список заметок</h3>
+	    <% IF notes %>
+	    <center class="error">
+	            <h4>Заметки пользователя:</h4>
+	            <ul> 
+	                <% FOR nt IN notes %>
+	                    <li><a href="/<% nt.id %>"><% nt.title %></a>&nbsp;&nbsp;&nbsp;<span><% nt.create_time %></span></li>
+	                <% END %>
+	            </ul>
+	    </center>
+	    <% ELSE %>
+		    <center>
+		        <span>Нет заметок.</span>
+		    </center>
+	    <% END %>
+	</div>
+</div>

@@ -1,0 +1,23 @@
+<form class="form-horizontal" id="login_form" name="loginform" method="post" onsubmit="document.getElementById('submit').disable=true; document.getElementById('submit').value='Login...';">
+	  <div class="control-group">
+	    	<label class="control-label" for="inputEmail">Логин:</label>
+		    <div class="controls">
+		      	<input type="text" name="login" id="inputEmail" placeholder="Логин">
+		    </div>
+	  </div>
+	  <div class="control-group">
+	    	<label class="control-label" for="inputPassword">Пароль:</label>
+		    <div class="controls">
+		      	<input type="password" name="password" id="inputPassword" placeholder="Пароль">
+		    </div>
+	  </div>
+	  <br/>
+	  <div class="control-group">
+	    <div class="controls">
+	      	<button type="submit" class="btn btn-primaty">Войти</button>
+	    </div>
+	  </div>
+</form>
+<br/>
+<h3><a href="/new">Зарегистрироваться</a></h3>
+

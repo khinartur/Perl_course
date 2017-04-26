@@ -1,0 +1,76 @@
+<div class="row">
+<div class="col-md-6" style="text-align: center;">
+    <h3>Мой профиль</h3>
+    <div>
+    	<span>Moй логин: </span>
+    	<% login %>
+    </div>
+    <br/>
+
+    <h3>Новая заметка:</h3>
+    <form class="form_horizontal" id="noteform" name="noteform" method="post" onsubmit="document.getElementById('submit').disable=true; document.getElementById('submit').value='Posting...'; window.location.reload(true);">
+        <div class="control_group">
+        	<label class="countrol_label" for="title_note">Название заметки:</label>
+        	<div class="controls">
+                <input type="text" name="title" id="title_node" value="<% title %>">
+        	</div>
+        </div>
+        <div class="control_group">
+        	<label class="countrol_label" for="input_note">Текст заметки:</label>
+        	<div class="controls">
+                <textarea name="text" class="paste_textarea" id="input_note" rows="7" style="oveflow: hidden; word-wrap: break-word; resize: none; height: 200px; width: 350px"><% text %></textarea>
+        	</div>
+        </div>
+        <br/>
+        <div class="control_group">
+        	<label class="countrol_label" for="select_note">Доступно для чтения:</label>
+        	<div class="controls">
+                <select name="rule" id="select_note">
+                        <option value="all" <% IF rule == 'all' %>selected="selected"<% END %>>Всем</option>
+                        <option value="friends" <% IF rule == 'friends' %>selected="selected"<% END %>>Только друзьям</option>
+                </select>
+        	</div>
+        </div>
+        <br/>
+        <div class="control_group">
+        	<div class="controls">
+            	<button type="submit" class="btn" name="submit">Создать</button>
+        	</div>
+        </div>
+    </form>
+</div>
+<div class="col-md-3">
+    <h3>Список друзей</h3>
+    <% IF friends %>
+    <center>
+            <h4>Мои друзья:</h4>
+            <ul> 
+                <% FOR fr IN friends %>
+                    <li><a href="/<% fr.login %>"><% fr.login %></a></li>
+                <% END %>
+            </ul>
+    </center>
+    <% ELSE %>
+    <center>
+        <h6>Нет друзей.</h6>
+    </center>
+    <% END %>
+</div>
+<div class="col-md-3">
+    <h3>Список заметок</h3>
+    <% IF notes %>
+    <center class="error">
+            <h4>Мои заметки:</h4>
+            <ul> 
+                <% FOR nt IN notes %>
+                    <li><a href="/<% nt.id %>"><% nt.title %></a><span>&nbsp;&nbsp;&nbsp;<% nt.create_time %></span></li>
+                <% END %>
+            </ul>
+    </center>
+    <% ELSE %>
+        <center>
+            <h6>Нет заметок.</h6>
+        </center>
+    <% END %>
+</div>
+</div>

@@ -1,0 +1,14 @@
+<div class="col-md-6 col-md-offset-3">
+	<h3>Заметка "<% title %>"</h3>
+	<textarea name="notetext" class="note_textarea" rows="15" style="oveflow: hidden; word-wrap: break-word; resize: none; height: 400px; width:500px"><% text %></textarea>
+
+	<div>
+		<form class="form-horizontal" id="back_form" name="backform" method="post">
+			  <div class="control-group">
+			    <div class="controls">
+			      	<button type="submit" class="btn btn-primary">Назад</button>
+			    </div>
+			  </div>
+		</form>
+	</div>
+</div>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="<% settings.charset %>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title><% settings.appname %></title>
+  <link rel="stylesheet" href="<% request.uri_base %>/css/bootstrap.min.css">
+
+<!-- Grab jQuery from a CDN, fall back to local if necessary -->
+<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+<script type="text/javascript">/* <![CDATA[ */
+    !window.jQuery && document.write('<script type="text/javascript" src="<% request.uri_base %>/javascripts/jquery.js"><\/script>')
+/* ]]> */</script>
+
+</head>
+<body style="padding-top: 70px; padding-bottom: 70px; background-color: white;">
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation" style="background-color: black;">
+  <% IF exit_button %>
+    <form class="navbar-form navbar-right" id="exitform" name="exitform" method="post" onsubmit="document.getElementById('submit').disable=true;">    
+      <input type="hidden" name="exit" value="1">
+      <button type="submit" class="btn btn-warning">Выйти</button>
+      <span>&nbsp;&nbsp;&nbsp;</span>
+    </form>
+  <% END %>
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/<% logged_user %>" style="color: white;">Notes Web</a>
+    </div>
+    <% IF people %>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+          <li style="margin-left: 100px;"><a href="/people" style="color: whitesmoke;">Пользователи</a></li>
+        </ul>
+      </div>
+    <% END %>
+  </div>
+</nav>
+    
+<div style="text-align: center;">  
+  <div style="background-color: indianred;">
+    <% IF err %><center class="error"><span style="color: white;">Error:</span><br/><%FOR e IN err %><span style="color: white;"><% e %></span><br/><% END %></center><% END %>
+  </div>
+  <% content %>
+</div>
+
+<nav class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <span class="navbar-brand">Powered by Dancer2</span>
+    </div>
+  </div>
+</nav>
+</body>
+</html>

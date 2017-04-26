@@ -1,0 +1,11 @@
+<div class="col-md-6 col-md-offset-3">
+	<h3>Список всех пользователей:</h3>
+	<br/>
+	<% IF people_list %>
+	<ul>
+		<% FOR p IN people_list %>
+			<li><a href="/<% p.login %>"><% p.login %></a></li>
+		<% END %>
+	</ul>
+	<% END %>
+</div>
