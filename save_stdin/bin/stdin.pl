@@ -16,20 +16,35 @@ open(my $fh, '>', $file);
 
 my ($length, $lines, $average);
 
-$SIG{INT} = \&first_ctrl_c;
+my $count = 0;
+
+my $ctrl_handler = sub {
+	if (++$count == 1) {
+		print STDERR 'Double Ctrl+C for exit';
+		return;
+	}
+	$average = int ($length / $lines);
+	print STDOUT "$length $lines $average";
+	exit(0);
+};
+
+
+$SIG{INT} = sub {
+	$ctrl_handler->();
+};
+
 
 while (<STDIN>) {
 	print {$fh} $_;
 	chomp $_;
 	$length += scalar split //, $_;
 	$lines++;
-	$SIG{INT} = \&first_ctrl_c;
+	$count = 0;
+	$SIG{INT} = sub {
+		$ctrl_handler->();
+	};
 }
 
 $average = int ($length / $lines);
-print STDOUT "$length $lines $average";	
+print STDOUT "$length $lines $average";
 
-sub first_ctrl_c {
-	print STDERR 'Double Ctrl+C for exit';
-	$SIG{INT} = 'DEFAULT';
-}
