@@ -3,10 +3,10 @@ use utf8;
 use strict;
 use warnings;
 use 5.010;
-use JSON::XS;
 use FindBin;
 use lib "$FindBin::Bin/../lib/";
 use VFS;
+use JSON;
 
 our $VERSION = 1.0;
 
@@ -22,5 +22,4 @@ my $buf;
 	$buf = <>;
 }
 
-# Вот досада, JSON получается трудночитаемым, совсем не как в задании.
-print JSON::XS::encode_json(VFS::parse($buf));
+print JSON::to_json(VFS::parse($buf));

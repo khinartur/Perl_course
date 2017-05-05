@@ -6,6 +6,7 @@ use 5.010;
 use File::Basename;
 use File::Spec::Functions qw{catdir};
 use JSON::XS;
+use Encode;
 no warnings 'experimental::smartmatch';
 
 sub mode2s {
@@ -33,21 +34,24 @@ sub mode2s {
 sub parse { 
 
 	my $arg = shift;
-	my @arr = split //, $arg;
 	my $total_result;
 
 	my @levels;				#уровни вложенности
 	my $temp_level = 0;
 
-	my $next_byte = shift @arr;
+	my $position = 0;
+	my $next_byte = substr $arg, $position++, 1;
 
 	if ($next_byte eq "D") {			#формируем root и проверяем валидность входного буфера
 				my $result = {};
 				
 				$result->{type} = 'directory';
-	    		my $name_size = unpack 'n', join '', splice(@arr, 0, 2);
-	       		$result->{name} = join '', splice(@arr, 0, $name_size);
-	       		$result->{mode} = mode2s(unpack 'n', join '', splice(@arr, 0, 2));
+	    		my $name_size = unpack 'n', substr $arg, $position, 2;
+	    		$position += 2;
+	       		$result->{name} = substr $arg, $position, $name_size;
+	       		$position += $name_size;
+	       		$result->{mode} = mode2s(unpack 'n', substr $arg, $position, 2);
+	       		$position += 2;
 	       		$result->{list} = [];
 	       		$total_result = $result;
 	       		$levels[$temp_level+1] = $result->{list};
@@ -59,17 +63,20 @@ sub parse {
 		die "The blob should start from 'D' or 'Z'";
 	}
 
-	$next_byte = shift @arr;
+	$next_byte = substr $arg, $position++, 1;
 
 	while ($next_byte) {		#интерпретируем каждый байт буфера
 
 		if ($next_byte eq "D") {
 					my $result = {};
-
+					
 					$result->{type} = 'directory';
-		    		my $name_size = unpack 'n', join '', splice(@arr, 0, 2);
-		       		$result->{name} = join '', splice(@arr, 0, $name_size);
-		       		$result->{mode} = mode2s(unpack 'n', join '', splice(@arr, 0, 2));
+		    		my $name_size = unpack 'n', substr $arg, $position, 2;
+		    		$position += 2;
+		       		$result->{name} = decode_utf8(substr $arg, $position, $name_size);
+		       		$position += $name_size;
+		       		$result->{mode} = mode2s(unpack 'n', substr $arg, $position, 2);
+		       		$position += 2;
 		       		$result->{list} = [];
 		       		push @{$levels[$temp_level]}, $result;
 		       		$levels[$temp_level+1] = $result->{list};
@@ -78,11 +85,17 @@ sub parse {
 					my $result = {};
 
 					$result->{type} = 'file';
-		    		my $name_size = unpack 'n', join '', splice(@arr, 0, 2);
-		       		$result->{name} = join '', splice(@arr, 0, $name_size);
-		       		$result->{mode} = mode2s(unpack 'n', join '', splice(@arr, 0, 2));
-		       		$result->{size} = unpack 'N', join '', splice(@arr, 0, 4);
-		       		$result->{hash} = unpack 'H40', join '', splice(@arr, 0, 20);
+		    		my $name_size = unpack 'n', substr $arg, $position, 2;
+		    		$position += 2;
+		       		my $str = substr $arg, $position, $name_size;
+		       		$result->{name} = decode_utf8($str);
+		       		$position += $name_size;
+		       		$result->{mode} = mode2s(unpack 'n', substr $arg, $position, 2);
+		       		$position += 2;
+		       		$result->{size} = unpack 'N', substr $arg, $position, 4;
+		       		$position += 4;
+		       		$result->{hash} = unpack 'H40', substr $arg, $position, 20;
+		       		$position += 20;
 
 		       		push @{$levels[$temp_level]}, $result;
 		}
@@ -93,10 +106,9 @@ sub parse {
 			$temp_level--;
 		}
 		elsif ($next_byte eq "Z") {
-			die "Garbage ae the end of the buffer" if scalar @arr;
+			die "Garbage ae the end of the buffer" if substr $arg, $position, 1;
 		}
-
-		$next_byte = shift @arr;
+		$next_byte = substr $arg, $position++, 1;
 	}
 
 	return $total_result;
