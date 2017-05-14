@@ -49,7 +49,7 @@ sub get_uris {
 	    ->find('a')					#найти все теги <a>
 	    ->each(sub {				#для каждой найденной ссылки получить ее абсолютный адрес и убрать теги привязки и добавить в result
 	        my $uri = URI->new_abs($_->attr('href'), $base);					#и uri_hash если она до этого не встречалась
-	        if ($uri =~ m/^$base[^#]/ && !(exists $uri_hash{$uri})) {
+	        if ($uri =~ m/^$base[^#]/ && !(exists $uri_hash{$uri}) && scalar keys %uri_hash < MAX_URI_COUNT) {
 	        	$uri_hash{$uri} = 0;
 				push @result, $uri;
 	        }
@@ -106,7 +106,7 @@ sub run {
 
     my $processes = 0; 	#количество параллельных загрузок страниц
     my $next; $next = sub {
-    	while ($processes <= MAX_URI_COUNT and @uris) {
+    	while ($processes <= $parallel_factor and @uris and scalar keys %uri_hash < MAX_URI_COUNT) {
     		my $page = shift @uris;
     		say "Loading page $page";
     		$processes++;
