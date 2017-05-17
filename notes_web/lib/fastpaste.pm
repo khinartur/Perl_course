@@ -2,6 +2,7 @@ package fastpaste;
 use utf8;
 use Dancer2;
 use Dancer2::Plugin::Database;
+use Dancer2::Plugin::CSRF;
 use Digest::CRC qw/crc64/;
 use HTML::Entities;
 use Digest::MD5 'md5_hex';
@@ -63,6 +64,13 @@ hook before => sub {
           err => 'Для использования сайта необходима авторизация!'
         }
     }
+
+    if (request->is_post() ) {
+        my $csrf_token = params->{csrf_token};
+        if ( !$csrf_token || !validate_csrf_token($csrf_token) ) {
+            redirect '/login';
+        }
+    }
 };
 
 hook before_template_render => sub {
@@ -75,11 +83,12 @@ hook before_template_render => sub {
 };
 
 get '/' => sub {
-    redirect '/login';
+    forward '/login/';
 };
 
 get '/login' => sub {
-    return template 'login';
+
+    return template 'login.tt' => { csrf_token => get_csrf_token() };
 };
 
 post '/login' => sub {                  #обработчик формы авторизации
@@ -91,12 +100,12 @@ post '/login' => sub {                  #обработчик формы авт�
         redirect '/' . $login;
     } 
     else {
-        return template 'login.tt' => {err => 'Неправильный логин или пароль!'}
+        return template 'login.tt' => {err => 'Неправильный логин или пароль!', csrf_token => get_csrf_token()}
     }
 };
 
 get '/new' => sub {                    
-    return template 'new';
+    return template 'new' => { csrf_token => get_csrf_token() };
 };
 
 post '/new' => sub {                    #обработчик формы регистрации
@@ -105,7 +114,7 @@ post '/new' => sub {                    #обработчик формы рег�
     my $password = md5_hex(params->{password});
 
     if (!$login || !$password) {
-        return template 'new' => {err => 'Оба поля обязательны!'}
+        return template 'new' => {err => 'Оба поля обязательны!', csrf_token => get_csrf_token() }
     }
 
     my $sth = mydb::ppr_insert_user();
@@ -120,6 +129,10 @@ get '/people' => sub {              #страница вывода всех по
 
     my $people_list = mydb::get_people_list();
 
+    for (@$people_list) {
+        $_->{login} = encode_entities($_->{login}, '<>&"');
+    }
+
     return template 'people' => {people_list => $people_list}
 };
 
@@ -131,7 +144,7 @@ get qr{^/([a-z0-9]{16})$} => sub {          #страница отображен
 
     unless ($sth->execute($id)) {
         response->status(404);
-        return template 'profile' => {err => ['Заметка не найдена.']};
+        return template 'profile' => {err => ['Заметка не найдена.'], csrf_token => get_csrf_token()};
     }
     my $db_res = $sth->fetchrow_hashref();
     
@@ -157,7 +170,8 @@ get qr{^/([a-zA-Z0-9]+)$} => sub {      #страница профиля пол�
     if (session('user') eq $login) {    #если это страница авторизованного пользователя
         my ($notes, $friends) = get_notes_and_friends($login);
 
-        return template 'profile.tt' => { login => $login, notes => $notes, friends => $friends }
+        $login = encode_entities($login, '<>&"');
+        return template 'profile.tt' => { login => $login, notes => $notes, friends => $friends, csrf_token => get_csrf_token() }
     }
     elsif (session('user')) {           #если пользователь зашел на страницу другого пользователя
 
@@ -165,15 +179,15 @@ get qr{^/([a-zA-Z0-9]+)$} => sub {      #страница профиля пол�
         
         if ($person) {
             my ($notes, $button_value) = guest_page($person);
-            return template 'guest' => {login => $login, notes => $notes, btn_value => $button_value}
+            return template 'guest' => {login => $login, notes => $notes, btn_value => $button_value, csrf_token => get_csrf_token()}
         }
         else {
-            return template 'profile' => {login => session('user'), err => 'Пользователя не существует.'}
+            return template 'profile' => {login => session('user'), err => 'Пользователя не существует.', csrf_token => get_csrf_token()}
         }
         
     }
     else {              #если незарегистрированный пользователь пытается прочитать чьи-то заметки
-        return template 'login' => {err => 'Нужна авторизация для доступа к пользователям.'}
+        return template 'login' => {err => 'Нужна авторизация для доступа к пользователям.', csrf_token => get_csrf_token()}
     }
 
 };
@@ -211,7 +225,7 @@ post qr{^/([a-zA-Z0-9]+)$} => sub {             #добавление друга
     if (@err) {
         $text = encode_entities($text, '<>&"');
         $title = encode_entities($title, '<>&"');
-        return template 'profile' => {login => $login, text => $text, title => $title, rule => $rule, err => \@err};
+        return template 'profile' => {login => $login, text => $text, title => $title, rule => $rule, err => \@err, csrf_token => get_csrf_token()};
     }
 
     my $sth = mydb::ppr_insert_note();

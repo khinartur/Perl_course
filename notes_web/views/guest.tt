@@ -8,6 +8,7 @@
 	    <br/>
 	    <form class="form_horizontal" id="friendform" name="friendform" method="post">
 	        <input type="hidden" name="add" value="1">
+	      	<input type="hidden" name='csrf_token' value='<% csrf_token %>'>
 	        <button type="submit" class="btn btn-primary" name="submit" <% IF btn_value == 'У вас в друзьях' %>disabled<% END%>><% btn_value %></button>
 	    </form>
 	</div>

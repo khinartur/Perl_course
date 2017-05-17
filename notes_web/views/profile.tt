@@ -32,6 +32,11 @@
         	</div>
         </div>
         <br/>
+        <div class="control-group">
+            <div class="controls">
+                <input type="hidden" name='csrf_token' value='<% csrf_token %>'>
+            </div>
+        </div>
         <div class="control_group">
         	<div class="controls">
             	<button type="submit" class="btn" name="submit">Создать</button>

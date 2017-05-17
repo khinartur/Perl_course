@@ -1,0 +1,4 @@
+---
+plugin.csrf:
+  token: 0F0CE480-3B24-11E7-953B-B8D2F2E4E9B8
+user: artur

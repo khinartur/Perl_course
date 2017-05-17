@@ -18,6 +18,7 @@
   <% IF exit_button %>
     <form class="navbar-form navbar-right" id="exitform" name="exitform" method="post" onsubmit="document.getElementById('submit').disable=true;">    
       <input type="hidden" name="exit" value="1">
+      <input type="hidden" name='csrf_token' value='<% csrf_token %>'>
       <button type="submit" class="btn btn-warning">Выйти</button>
       <span>&nbsp;&nbsp;&nbsp;</span>
     </form>
